@@ -9,6 +9,22 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 CMC_URL = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
 
 
+def format_money(value):
+    if value >= 1_000_000_000:
+        return f"${value / 1_000_000_000:.2f}B"
+    if value >= 1_000_000:
+        return f"${value / 1_000_000:.2f}M"
+    if value >= 1_000:
+        return f"${value / 1_000:.2f}K"
+    return f"${value:.2f}"
+
+
+def format_price(price):
+    if price >= 1:
+        return f"${price:,.4f}"
+    return f"${price:.8f}".rstrip("0").rstrip(".")
+
+
 def get_top_volume_gainers():
     headers = {
         "X-CMC_PRO_API_KEY": CMC_API_KEY,
@@ -27,7 +43,6 @@ def get_top_volume_gainers():
     response.raise_for_status()
 
     data = response.json()["data"]
-
     coins = []
 
     for coin in data:
@@ -35,11 +50,11 @@ def get_top_volume_gainers():
 
         volume_change = quote.get("volume_change_24h")
         volume_24h = quote.get("volume_24h", 0)
+        market_cap = quote.get("market_cap", 0)
 
         if volume_change is None:
             continue
 
-        # фильтр объема > 5 млн $
         if volume_24h < 5_000_000:
             continue
 
@@ -49,21 +64,11 @@ def get_top_volume_gainers():
             "price": quote["price"],
             "volume_change_24h": volume_change,
             "volume_24h": volume_24h,
+            "market_cap": market_cap,
             "price_change_24h": quote.get("percent_change_24h"),
-            "rank": coin.get("cmc_rank"),
         })
 
-    return sorted(
-        coins,
-        key=lambda x: x["volume_change_24h"],
-        reverse=True
-    )[:5]
-
-
-def format_price(price):
-    if price >= 1:
-        return f"${price:,.4f}"
-    return f"${price:.8f}".rstrip("0").rstrip(".")
+    return sorted(coins, key=lambda x: x["volume_change_24h"], reverse=True)[:5]
 
 
 def build_message(coins):
@@ -79,9 +84,10 @@ def build_message(coins):
         message += (
             f"{i}. {coin['symbol']} — {coin['name']}\n"
             f"📊 Рост объема: +{coin['volume_change_24h']:.2f}%\n"
+            f"💵 Объем 24ч: {format_money(coin['volume_24h'])}\n"
+            f"🏦 Market Cap: {format_money(coin['market_cap'])}\n"
             f"💰 Цена: {format_price(coin['price'])}\n"
-            f"📈 Изм. цены: {coin['price_change_24h']:.2f}%\n"
-            f"🏦 Rank: #{coin['rank']}\n\n"
+            f"📈 Изм. цены: {coin['price_change_24h']:.2f}%\n\n"
         )
 
     return message
