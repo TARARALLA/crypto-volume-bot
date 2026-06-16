@@ -1,29 +1,32 @@
 name: CMC Volume Bot
 
 on:
-  schedule:
-    - cron: "*/15 * * * *"
-  workflow_dispatch:
+schedule:
+- cron: "5 0 * * *"
+- cron: "5 6 * * *"
+workflow_dispatch:
 
 jobs:
-  run-bot:
-    runs-on: ubuntu-latest
+run-bot:
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+```
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+  - name: Setup Python
+    uses: actions/setup-python@v5
+    with:
+      python-version: '3.11'
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+  - name: Install dependencies
+    run: pip install -r requirements.txt
 
-      - name: Run bot
-        env:
-          CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python bot.py
+  - name: Run bot
+    env:
+      CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    run: python bot.py
+```
